@@ -12,32 +12,40 @@ router = APIRouter(
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    
-    # Auto-create the college if it doesn't exist for seamless registration during development
-    college = db.query(models.College).filter(models.College.id == user.college_id).first()
-    if not college:
-        college = models.College(id=user.college_id, name=f"Campus {user.college_id}")
-        db.add(college)
-        db.commit()
-        db.refresh(college)
+    try:
+        db_user = db.query(models.User).filter(models.User.email == user.email).first()
+        if db_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Auto-create the college if it doesn't exist for seamless registration during development
+        college = db.query(models.College).filter(models.College.id == user.college_id).first()
+        if not college:
+            college = models.College(id=user.college_id, name=f"Campus {user.college_id}")
+            db.add(college)
+            db.commit()
+            db.refresh(college)
 
-    hashed_password = auth.get_password_hash(user.password)
-    db_user = models.User(
-        email=user.email,
-        password=hashed_password,
-        name=user.name,
-        role=user.role,
-        user_class=user.user_class,
-        branch=user.branch,
-        college_id=user.college_id
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+        hashed_password = auth.get_password_hash(user.password)
+        db_user = models.User(
+            email=user.email,
+            password=hashed_password,
+            name=user.name,
+            role=user.role,
+            user_class=user.user_class,
+            branch=user.branch,
+            college_id=user.college_id
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
