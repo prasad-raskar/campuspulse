@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { SkeletonCard } from '../components/Skeleton';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { API_URL } from '../config';
+import { API_URL, getMediaUrl } from '../config';
 
 
 const NoticesFeed = () => {
@@ -134,15 +134,15 @@ const NoticesFeed = () => {
                 
                 {notice.image_url && (
                   <div className="mt-4 mb-2">
-                    <a href={`${API_URL}${notice.image_url}`} target="_blank" rel="noopener noreferrer">
-                      <img src={`${API_URL}${notice.image_url}`} alt={notice.title} className="max-h-80 w-auto object-cover rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-90 transition-opacity" />
+                    <a href={getMediaUrl(notice.image_url)} target="_blank" rel="noopener noreferrer">
+                      <img src={getMediaUrl(notice.image_url)} alt={notice.title} className="max-h-80 w-auto object-cover rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:opacity-90 transition-opacity" />
                     </a>
                   </div>
                 )}
 
                 {notice.pdf_url && (
                   <div className="mt-4 mb-2">
-                    <a href={`${API_URL}${notice.pdf_url}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                    <a href={getMediaUrl(notice.pdf_url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
                       <Tag className="mr-2 -ml-1 h-4 w-4 text-gray-500 dark:text-gray-400" />
                       View Assignment Document (PDF)
                     </a>
