@@ -5,8 +5,15 @@ from database import engine, Base
 from routers import auth, notices, dashboard
 import os
 
+# Import all models so they are registered with Base before create_all
+import models
+
 # Create tables
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine)
+    print("Database tables created successfully!")
+except Exception as e:
+    print(f"Error creating tables: {e}")
 
 app = FastAPI(
     title="CampusPulse API",

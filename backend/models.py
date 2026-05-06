@@ -50,7 +50,7 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(Enum(RoleEnum), default=RoleEnum.student, nullable=False)
+    role = Column(Enum(RoleEnum, native_enum=False), default=RoleEnum.student, nullable=False)
     user_class = Column(String, nullable=True) # Renamed from 'class' as it's a reserved keyword in Python
     branch = Column(String, nullable=True)
     fcm_token = Column(String, nullable=True)
@@ -68,7 +68,7 @@ class Notice(Base):
     college_id = Column(Integer, ForeignKey("colleges.id"), nullable=False)
     title = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=False)
-    notice_type = Column(Enum(NoticeTypeEnum), default=NoticeTypeEnum.general)
+    notice_type = Column(Enum(NoticeTypeEnum, native_enum=False), default=NoticeTypeEnum.general)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     target_class = Column(String, nullable=True)
     target_branch = Column(String, nullable=True)
@@ -87,7 +87,7 @@ class Notification(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     notice_id = Column(Integer, ForeignKey("notices.id"), nullable=False)
-    status = Column(Enum(NotificationStatusEnum), default=NotificationStatusEnum.unread)
+    status = Column(Enum(NotificationStatusEnum, native_enum=False), default=NotificationStatusEnum.unread)
     read_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -100,7 +100,7 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(Date, nullable=False)
-    status = Column(Enum(AttendanceStatusEnum), nullable=False)
+    status = Column(Enum(AttendanceStatusEnum, native_enum=False), nullable=False)
 
     # Relationships
     student = relationship("User", back_populates="attendance_records")
