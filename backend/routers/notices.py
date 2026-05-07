@@ -63,57 +63,63 @@ def create_notice(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_role([models.RoleEnum.admin, models.RoleEnum.faculty]))
 ):
-    # 1. Create notice
-    db_notice = models.Notice(
-        **notice.model_dump(),
-        college_id=current_user.college_id,
-        created_by=current_user.id
-    )
-    db.add(db_notice)
-    db.commit()
-    db.refresh(db_notice)
-    
-    # 2. Find relevant users to notify
-    query = db.query(models.User).filter(
-        models.User.college_id == current_user.college_id,
-        models.User.id != current_user.id
-    )
-    
-    # Filter by class and branch if specified in the notice
-    if notice.target_class:
-        query = query.filter(models.User.user_class == notice.target_class)
-    if notice.target_branch:
-        query = query.filter(models.User.branch == notice.target_branch)
-        
-    relevant_users = query.all()
-    
-    # 3. Store notification history & collect FCM tokens
-    fcm_tokens = []
-    notifications = []
-    
-    for user in relevant_users:
-        notifications.append(models.Notification(
-            user_id=user.id,
-            notice_id=db_notice.id,
-            status=models.NotificationStatusEnum.unread
-        ))
-        if user.fcm_token:
-            fcm_tokens.append(user.fcm_token)
-            
-    if notifications:
-        db.add_all(notifications)
+    try:
+        # 1. Create notice
+        db_notice = models.Notice(
+            **notice.model_dump(),
+            college_id=current_user.college_id,
+            created_by=current_user.id
+        )
+        db.add(db_notice)
         db.commit()
+        db.refresh(db_notice)
         
-    # 4. Send FCM Push Notification to relevant users
-    if fcm_tokens:
-        send_push_notifications(
-            tokens=fcm_tokens,
-            title=f"New Notice: {db_notice.title}",
-            body=db_notice.description[:100] + "..." if len(db_notice.description) > 100 else db_notice.description,
-            data={"notice_id": str(db_notice.id)}
+        # 2. Find relevant users to notify
+        query = db.query(models.User).filter(
+            models.User.college_id == current_user.college_id,
+            models.User.id != current_user.id
         )
         
-    return db_notice
+        # Filter by class and branch if specified in the notice
+        if notice.target_class:
+            query = query.filter(models.User.user_class == notice.target_class)
+        if notice.target_branch:
+            query = query.filter(models.User.branch == notice.target_branch)
+            
+        relevant_users = query.all()
+        
+        # 3. Store notification history & collect FCM tokens
+        fcm_tokens = []
+        notifications = []
+        
+        for user in relevant_users:
+            notifications.append(models.Notification(
+                user_id=user.id,
+                notice_id=db_notice.id,
+                status=models.NotificationStatusEnum.unread
+            ))
+            if user.fcm_token:
+                fcm_tokens.append(user.fcm_token)
+                
+        if notifications:
+            db.add_all(notifications)
+            db.commit()
+            
+        # 4. Send FCM Push Notification to relevant users
+        if fcm_tokens:
+            send_push_notifications(
+                tokens=fcm_tokens,
+                title=f"New Notice: {db_notice.title}",
+                body=db_notice.description[:100] + "..." if len(db_notice.description) > 100 else db_notice.description,
+                data={"notice_id": str(db_notice.id)}
+            )
+            
+        return db_notice
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/my", response_model=List[schemas.NoticeResponse])
 def get_my_notices(
