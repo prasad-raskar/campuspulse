@@ -8,10 +8,12 @@ import os
 # Import all models so they are registered with Base before create_all
 import models
 
-# Create tables
+# Create/recreate tables
 try:
+    # Drop all tables and recreate to fix any enum type mismatches
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    print("Database tables created successfully!")
+    print("Database tables recreated successfully!")
 except Exception as e:
     print(f"Error creating tables: {e}")
 
